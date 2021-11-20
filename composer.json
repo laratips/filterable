@@ -1,0 +1,51 @@
+{
+    "name": "laratips/filterable",
+    "description": "Package for handling model filtering by condition rule in Laravel",
+    "type": "library",
+    "keywords": [
+        "filterable",
+        "query",
+        "column",
+        "condition",
+        "laravel"
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Arman Poghosyan",
+            "email": "armpogart@gmail.com",
+            "role": "Developer and maintainer"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "illuminate/container": "^8.0",
+        "illuminate/database": "^8.0",
+        "illuminate/http": "^8.0",
+        "illuminate/support": "^8.0",
+        "illuminate/view": "^8.0",
+        "php-ds/php-ds": "^1.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Laratips\\Filterable\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Laratips\\Filterable\\Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Laratips\\Filterable\\FilterableServiceProvider"
+            ]
+        }
+    }
+}
