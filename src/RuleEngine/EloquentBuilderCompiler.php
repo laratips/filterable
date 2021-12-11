@@ -7,12 +7,16 @@ namespace Laratips\Filterable\RuleEngine;
 use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Expression;
 use Laratips\Filterable\RuleEngine\Token\ClosingParenthesis;
 use Laratips\Filterable\RuleEngine\Token\LogicalAnd;
 use Laratips\Filterable\RuleEngine\Token\LogicalOr;
 use Laratips\Filterable\RuleEngine\Token\OpeningParenthesis;
 use Laratips\Filterable\RuleEngine\Token\Token;
 use Laratips\Filterable\RuleEngine\Token\ValueToken;
+
+use function count;
+use function date;
 
 class EloquentBuilderCompiler
 {
@@ -30,12 +34,15 @@ class EloquentBuilderCompiler
 
     /**
      * @throws Exception
+     * @noinspection ThrowRawExceptionInspection
      */
     public function getCompiledRule(): Closure
     {
         if ($this->isIncompleteCondition()) {
             throw new Exception('Incomplete condition');
-        } elseif (!$this->parenthesisMatch()) {
+        }
+
+        if (!$this->parenthesisMatch()) {
             throw new Exception('Missing closing parenthesis');
         }
 
@@ -46,7 +53,11 @@ class EloquentBuilderCompiler
     {
         return function (Builder $query) {
             foreach ($this->conditions as [$column, $operator, $value, $boolean]) {
-                $query->where($column, $operator, $value, $boolean);
+                if ($operator === 'between') {
+                    $query->whereBetween($column, $value, $boolean);
+                } else {
+                    $query->where($column, $operator, $value, $boolean);
+                }
             }
         };
     }
@@ -57,6 +68,19 @@ class EloquentBuilderCompiler
             $value = '%' . $value . '%';
         }
         $this->conditions[] = [$column, $operator, $value, $this->lastBoolean];
+        $this->lastToken = new ValueToken($value);
+    }
+
+    public function addDateCondition(string $column, string $operator, mixed $value): void
+    {
+        if (count($value) > 0 && $value[0] === $value[1]) {
+            $value = date('Y-m-d', $value[0]);
+        } else {
+            $operator = 'between';
+            $value = [date('Y-m-d H:i:s', $value[0]), date('Y-m-d H:i:s', $value[1])];
+        }
+
+        $this->conditions[] = [new Expression("DATE(`$column`)"), $operator, $value, $this->lastBoolean];
         $this->lastToken = new ValueToken($value);
     }
 
@@ -77,6 +101,7 @@ class EloquentBuilderCompiler
     {
         if ($token instanceof OpeningParenthesis) {
             if (!$this->expectOpeningParenthesis()) {
+                /** @noinspection ThrowRawExceptionInspection */
                 throw new Exception('Unexpected token: ' . $token::class);
             }
             $this->openParenthesis++;
@@ -99,6 +124,7 @@ class EloquentBuilderCompiler
     public function addLogical(Token $token): void
     {
         if ($this->lastToken instanceof LogicalAnd || $this->lastToken instanceof LogicalOr) {
+            /** @noinspection ThrowRawExceptionInspection */
             throw new Exception('Unexpected token: ' . $token::class);
         }
 

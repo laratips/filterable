@@ -6,6 +6,7 @@ namespace Laratips\Filterable\RuleEngine;
 
 use JetBrains\PhpStorm\Pure;
 use Laratips\Filterable\RuleEngine\Token\ClosingParenthesis;
+use Laratips\Filterable\RuleEngine\Token\DateRange;
 use Laratips\Filterable\RuleEngine\Token\Equal;
 use Laratips\Filterable\RuleEngine\Token\EscapedString;
 use Laratips\Filterable\RuleEngine\Token\Greater;
@@ -28,10 +29,11 @@ final class FilterGrammar implements GrammarInterface
     public function getDefinition(): array
     {
         return [
-            [LogicalAnd::class, '&', 85],
-            [LogicalOr::class, '\|', 80],
-            [NotEqual::class, '<>|!=', 75],
-            [Equal::class, '=', 70],
+            [LogicalAnd::class, '&', 90],
+            [LogicalOr::class, '\|', 85],
+            [NotEqual::class, '<>|!=', 80],
+            [Equal::class, '=', 75],
+            [DateRange::class, '\d{2}\/\d{2}\/\d{4}-\d{2}\/\d{2}\/\d{4}', 70],
             [Number::class, '-?\d+(?:\.\d+)?', 65],
             [EscapedString::class, '"[^"]*"|\'[^\']*\'', 60],
             [Like::class, '%', 55],

@@ -6,13 +6,13 @@ namespace Laratips\Filterable\RuleEngine;
 
 use Closure;
 use Exception;
-use Illuminate\Database\Eloquent\Builder;
 use JetBrains\PhpStorm\Pure;
 use Laratips\Filterable\RuleEngine\Token\ClosingParenthesis;
+use Laratips\Filterable\RuleEngine\Token\DateRange;
+use Laratips\Filterable\RuleEngine\Token\Equal;
 use Laratips\Filterable\RuleEngine\Token\Like;
 use Laratips\Filterable\RuleEngine\Token\OpeningParenthesis;
 use Laratips\Filterable\RuleEngine\Token\Token;
-use Laratips\Filterable\RuleEngine\Token\ValueToken;
 
 class Parser
 {
@@ -27,7 +27,7 @@ class Parser
     /**
      * @throws Exception
      */
-    public function parse(string $rule, string $column): \Closure
+    public function parse(string $rule, string $column): Closure
     {
         /** @var Token[] $tokens */
         $tokens = $this->tokenizer->tokenize($rule);
@@ -37,11 +37,22 @@ class Parser
             $handler($token, $this->compiler);
 
             if ($this->conditionCanBeAdded()) {
-                $this->addConditionFor($column);
+                if ($token instanceof DateRange) {
+                    $this->addDateConditionFor($column);
+                } else {
+                    $this->addConditionFor($column);
+                }
             }
         }
 
         return $this->compiler->getCompiledRule();
+    }
+
+    private function addDateConditionFor(string $column): void
+    {
+        $this->compiler->addDateCondition($column, $this->operator->getValue(), $this->value);
+        $this->operator = null;
+        $this->value = null;
     }
 
     private function addConditionFor(string $column): void
@@ -82,6 +93,10 @@ class Parser
     private function handleValueToken(): Closure
     {
         return function (Token $token) {
+            if ($token instanceof DateRange) {
+                $this->operator = new Equal('=');
+            }
+
             if ($this->operator === null && $token->getPosition() === 0) {
                 $this->operator = new Like('%');
             }
@@ -94,6 +109,7 @@ class Parser
     {
         return function (Token $token): void {
             if ($this->operator !== null) {
+                /** @noinspection ThrowRawExceptionInspection */
                 throw new Exception('Unexpected token: ' . $token::class);
             }
 
