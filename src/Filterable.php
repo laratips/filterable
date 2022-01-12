@@ -21,6 +21,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 use function array_filter;
+use function count;
 use function in_array;
 use function is_array;
 
@@ -42,11 +43,15 @@ trait Filterable
      * @throws NotFoundExceptionInterface
      * @throws Exception
      */
-    public function scopeFilterable(Builder $query, array $exclude = []): Builder
+    public function scopeFilterable(Builder $query, array $exclude = [], array $filters = []): Builder
     {
-        /** @var Request $request */
-        $request = Container::getInstance()->get(Request::class);
-        $params = $request->get($this->getFilterQueryParameterName());
+        if (count($filters) > 0) {
+            $params = $filters;
+        } else {
+            /** @var Request $request */
+            $request = Container::getInstance()->get(Request::class);
+            $params = $request->get($this->getFilterQueryParameterName());
+        }
 
         if (is_array($params)) {
             $params = array_filter(

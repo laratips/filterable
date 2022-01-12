@@ -18,8 +18,8 @@ class FilteringScope implements Scope
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
-    public function apply(Builder $builder, Model $model, array $exclude = []): void
+    public function apply(Builder $builder, Model $model, array $exclude = [], array $filters = []): void
     {
-        $this->scopeFilterable($builder, $exclude);
+        $this->scopeFilterable($builder, $exclude, $filters);
     }
 }
